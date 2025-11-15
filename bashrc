@@ -2,14 +2,12 @@
 export LANG=en_US.utf8
 export EDITOR=hx
 export SCREEN_STATUS=LAPTOP
+export PATH="$HOME/bin:$PATH"
+export LS_COLORS="di=1;33:fi=95:ex=1;31"
+PS1='\[\e[1;95m\]\u \[\e[1;91m\]\w \[\e[0;33m\]\$ \[\e[95m\]'
 
-mark() {
-    echo "$1" >>~/.mark
-    pwd >>~/.mark
-}
-
-cd() {
-
+cd()
+{
 	if [ "$#" -eq 0 ]; then
 		builtin cd
 		return
@@ -35,45 +33,27 @@ cd() {
 	fi
 }
 
-mclean() {
-    rm ~/.mark
-    touch ~/.mark
+mark()
+{
+  echo "$1" >>~/.mark
+  pwd >>~/.mark
 }
 
-function psh() {
-
-    git add .
-    git commit -m "$1"
-    git tag -ma "$2"
-    git push --follow-tags
-
+lsmark()
+{
+	sed -n 'p;n' ~/.mark
 }
 
-function pshh() {
-    git add .
-    git commit -m "$1"
-    git push
+rmmark() {
+	sed -i "/^$1$/,+1d" ~/.mark
 }
 
-function log() {
-    git log --oneline
+mclean()
+{
+  rm ~/.mark
+  touch ~/.mark
 }
 
-
-function auto() {
-    libtoolize
-    ./bootstrap
-    ./configure CXXFLAGS='-std=c++20 -O0 -g -fno-inline'
-    make -j 8
-}
-
-function ma() {
-    make -j 4
-}
-
-function clean() {
-    rm -rf configure configure~ aclocal.m4 autom4te.cache Makefile.in config.h.in
-}
 
 function blur()
 {
@@ -85,27 +65,29 @@ function bblur()
 {
 	rm ~/.config/picom/picom.conf
 }
-function tignix()
-{
-	nix run nixpkgs#nixVersions.nix_2_28 develop
-}
 
 function addpackage()
 {
-	sudo sed -i "55i\\    $1" /etc/nixos/configuration.nix
+	for pkg in "$@"; do
+		sudo sed -i "55i\\    $1" /etc/nixos/configuration.nix
+		done
 	sudo nixos-rebuild switch 
-}
-
-function deploytclocal()
-{
-	export NIX_OPTIONS=--impure	
-	nix run .#check-student -j8 -- tc-6 /home/macaronjaune/afs/yaka/tiger/mytiger
 }
 
 function rmpackage()
 {
-	sudo sed -i "/$1/d" /etc/nixos/configuration.nix
+	for pkg in "$@"; do
+		sudo sed -i "/$pkg/d" /etc/nixos/configuration.nix
+	done
 	sudo nixos-rebuild switch 
+}
+
+function auto()
+{
+  libtoolize
+  ./bootstrap
+  ./configure CXXFLAGS='-std=c++20 -O0 -g -fno-inline'
+  make -j 8
 }
 
 function listpackages()
@@ -116,6 +98,12 @@ function listpackages()
 		| grep -v '\]' \
 		| sed 's/^[ \t]*//;s/[ \t]*$//' \
 		| sed 's/^[0-9]*:[0-9]*:[0-9]*:[ \t]*//'
+}
+
+function deploytclocal()
+{
+	export NIX_OPTIONS=--impure	
+	nix run .#check-student -j8 -- tc-6 /home/macaronjaune/afs/yaka/tiger/mytiger
 }
 
 function tctest()
@@ -130,27 +118,22 @@ function tctest()
 	builtin cd ..
 }
 
-alias cat='bat'
-alias ls='ls --color=auto'
-alias grep='grep --color -n'
 
-alias breload='source ~/.bashrc'
-alias rebuild='sudo nixos-rebuild switch'
-
+#git
 alias gf='git push --force-with-lease'
 alias gb='git branch'
 alias gs='git status'
 alias grb='git rebase -i HEAD~10'
 alias grc='git rebase --continue'
+alias gra='git rebase --abort'
 alias gl='git log'
 alias gca='git commit --amend'
 alias gc='git commit -m'
 alias ga='git add -u'
 alias gd='git diff'
+alias log='git log --oneline'
 
-alias h='hx .'
-alias m='make -j 16'
-
+#tiger
 alias gentests='make gen-all-outputs -j16'
 alias dce='./src/tc -e --dead-code-elimination --ssa -L a.tig'
 alias ssa='./src/tc -e --ssa -L a.tig'
@@ -158,14 +141,32 @@ alias lir='./src/tc -e -L a.tig'
 alias debug='./src/tc -e --ssa-debug a.tig'
 alias scp='./src/tc -e --constant-propagation --ssa -L a.tig'
 alias cpy='./src/tc -e --copy-propagation --ssa -L a.tig'
+alias tignix='nix run nixpkgs#nixVersions.nix_2_28 develop'
 
-alias mg='make -C build  -j16'
-alias crab='build/gcc/crab1'
-alias embecosm='xrandr --output HDMI-1 --mode 2880x1620 --rate 60'
+
+#godot
+alias gdt='scons platform=linuxbsd use_llvm=yes dev_build=yes dev_mode=yes linker=lld generate_cc=1 tools=yes compiledb=yes -j16'
+alias mg='./bin/godot.linuxbsd.editor.dev.x86_64.llvm --path godot_dev/'
+
+#gccrs
+alias mr='make -C build  -j16'
 alias r='rustc --crate-type=lib'
-alias gdbg='gdb --args build/gcc/crab1 a.rs'
+alias crab='build/gcc/crab1'
+alias crab1='build/gcc/crab1 -frust-unused-check-2.0'
+alias embecosm='xrandr --output HDMI-1 --mode 2880x1620 --rate 60'
+alias gdbg='gdb --args ./build/gcc/crab1 a.rs'
+alias gdbg1='gdb --args ./build/gcc/crab1 -frust-unused-check-2.0 a.rs'
+
+#utils
 alias f='fzf | tr -d "\n" | xclip -selection clipboard'
+alias h='hx .'
+alias m='make -j 16'
+alias cat='bat'
+alias ls='ls --color=auto'
+alias grep='grep --color -n'
 
-export LS_COLORS="di=1;33:fi=95:ex=1;31"
-PS1='\[\e[1;95m\]\u \[\e[1;91m\]\w \[\e[0;33m\]\$ \[\e[95m\]'
-
+#nix
+alias breload='source ~/.bashrc'
+alias rebuild='sudo nixos-rebuild switch'
+alias nx='nix-shell'
+alias nxp='nix-shell -p'
